@@ -1,5 +1,6 @@
 FROM ubuntu:22.04
-
+ARG TARGETARCH=amd64
+ENV TARGETARCH=${TARGETARCH}
 ENV TZ=Asia/Shanghai
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -74,8 +75,13 @@ ENV LANG=zh_CN.UTF-8 \
 RUN mkdir /root/wxbot
 WORKDIR /root/wxbot/
 
-RUN wget https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_x86_64.deb -O /tmp/wechat.deb
-RUN dpkg -i /tmp/wechat.deb || apt-get install -f -y
+RUN echo "Downloading WeChat for ${TARGETARCH}..." && \
+    if [ "${TARGETARCH}" = "arm64" ]; then \
+        wget https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_arm64.deb -O /tmp/wechat.deb ; \
+    else \
+        wget https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_x86_64.deb -O /tmp/wechat.deb ; \
+    fi && \
+    dpkg -i /tmp/wechat.deb || true && apt-get install -f -y
 
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
